@@ -1,0 +1,72 @@
+[
+  {
+    "id": "boat-1",
+    "demo_name": "Sea King (Boat 1 demo)",
+    "site_id": "site-1",
+    "status": "out",
+    "departed_at": "2026-10-24T04:30:00Z"
+  },
+  {
+    "id": "boat-2",
+    "demo_name": "Ocean Star (Boat 2 demo)",
+    "site_id": "site-1",
+    "status": "out",
+    "departed_at": "2026-10-24T05:15:00Z"
+  },
+  {
+    "id": "boat-3",
+    "demo_name": "Coastal Pride (Boat 3 demo)",
+    "site_id": "site-1",
+    "status": "back",
+    "departed_at": "2026-10-24T03:00:00Z"
+  },
+  {
+    "id": "boat-4",
+    "demo_name": "Harbour Breeze (Boat 4 demo)",
+    "site_id": "site-2",
+    "status": "back",
+    "departed_at": "2026-10-24T04:00:00Z"
+  },
+  {
+    "id": "boat-5",
+    "demo_name": "Blue Wave (Boat 5 demo)",
+    "site_id": "site-2",
+    "status": "back",
+    "departed_at": "2026-10-24T04:45:00Z"
+  },
+  {
+    "id": "boat-6",
+    "demo_name": "Alappuzha Pearl (Boat 6 demo)",
+    "site_id": "site-3",
+    "status": "out",
+    "departed_at": "2026-10-24T05:00:00Z"
+  },
+  {
+    "id": "boat-7",
+    "demo_name": "Fisherman Joy (Boat 7 demo)",
+    "site_id": "site-3",
+    "status": "back",
+    "departed_at": "2026-10-24T03:30:00Z"
+  },
+  {
+    "id": "boat-8",
+    "demo_name": "Kochi Carrier (Boat 8 demo)",
+    "site_id": "site-4",
+    "status": "back",
+    "departed_at": "2026-10-24T02:30:00Z"
+  },
+  {
+    "id": "boat-9",
+    "demo_name": "Malabar Express (Boat 9 demo)",
+    "site_id": "site-4",
+    "status": "back",
+    "departed_at": "2026-10-24T03:10:00Z"
+  },
+  {
+    "id": "boat-10",
+    "demo_name": "Deep Horizon (Boat 10 demo)",
+    "site_id": "site-5",
+    "status": "back",
+    "departed_at": "2026-10-24T04:20:00Z"
+  }
+]

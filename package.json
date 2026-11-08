@@ -1,0 +1,19 @@
+{
+  "name": "kadal-signal",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Kadal Signal - Kerala Harbour Atlas & Marine Decision Aid",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

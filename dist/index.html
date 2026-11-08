@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Kadal Signal - Verified Kerala Harbour Atlas & Daily Marine Decision Aid. Merged CMFRI and OSM data with live INCOIS forecasts." />
+  <title>KADAL SIGNAL | Kerala Harbour Atlas & Marine Decision Aid</title>
+
+  <!-- Google Fonts: Sans-Serif + Noto Sans Malayalam -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/assets/index-DQ3GHRo6.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BTWrH4wi.css">
+</head>
+<body>
+
+  <!-- 1. Top Header -->
+  <header class="app-header" id="app-header">
+    <div class="brand-wrapper" id="brand-title-area" title="Tap 5 times to open hidden demo controls">
+      <div class="brand-icon">⚓</div>
+      <span class="brand-title">KADAL SIGNAL</span>
+      <span class="brand-kerala">KERALA</span>
+    </div>
+
+    <div class="header-status-area">
+      <!-- Cached Snapshot Pill (visible during offline mode) -->
+      <span class="snapshot-pill hidden" id="header-snapshot-pill">
+        📡 Cached Snapshot
+      </span>
+
+      <!-- Language Toggle Button -->
+      <button type="button" class="lang-toggle-btn" id="lang-toggle-btn" aria-label="Toggle language">
+        മലയാളം
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. Interactive Filter Bar -->
+  <section class="filter-bar" id="filter-bar" aria-label="Harbour filters">
+    <!-- Rendered dynamically by filters.ts -->
+  </section>
+
+  <!-- 3. Full-Screen Map Main Stage -->
+  <main class="main-stage" id="main-stage">
+    <div id="map" role="region" aria-label="Kerala Coastline Interactive Map"></div>
+
+    <!-- 4. Site Card (Bottom Sheet on Mobile, Side Panel on Desktop) -->
+    <aside class="site-card-panel" id="site-card-panel" aria-label="Harbour details">
+      <div class="sheet-handle-bar">
+        <div class="sheet-handle-pill"></div>
+      </div>
+      <div class="site-card-scroll">
+        <!-- Rendered dynamically by siteCard.ts -->
+      </div>
+    </aside>
+  </main>
+
+  <!-- 5. Bottom Disclaimer Strip -->
+  <footer class="credits-strip" id="credits-strip">
+    <span>Map: OpenStreetMap contributors | Data: CMFRI, INCOIS, Open-Meteo | <strong>Decision aid, not an official advisory</strong></span>
+  </footer>
+
+  <!-- 6. Modal: Validation Queue -->
+  <div class="modal-overlay" id="queue-modal" role="dialog" aria-modal="true" aria-label="Validation Queue">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Harbour Validation Queue</h3>
+        <button type="button" class="card-close-btn modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Rendered by queue.ts -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Modal: Community Contribution Questionnaire -->
+  <div class="modal-overlay" id="contribute-modal" role="dialog" aria-modal="true" aria-label="Contribute Ground Truth">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Harbour Truth Contribution</h3>
+        <button type="button" class="card-close-btn modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Rendered by queue.ts -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Modal: Departure / Return Boat Board -->
+  <div class="modal-overlay" id="board-modal" role="dialog" aria-modal="true" aria-label="Departure and Return Log">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Departure & Return Log</h3>
+        <button type="button" class="card-close-btn modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Rendered by board.ts -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Modal: Hidden Demo Controls -->
+  <div class="modal-overlay" id="demo-modal" role="dialog" aria-modal="true" aria-label="Demo Controls">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Demo Simulation Controls</h3>
+        <button type="button" class="card-close-btn modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Rendered by demoControls.ts -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Bootstrap (Vite + TypeScript) -->
+</body>
+</html>

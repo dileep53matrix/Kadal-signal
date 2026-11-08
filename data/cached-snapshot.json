@@ -1,0 +1,195 @@
+{
+  "snapshot_timestamp": "2026-10-24T00:00:00Z",
+  "source": "INCOIS-CMFRI-OFFLINE-CACHE",
+  "sites": [
+    {
+      "id": "site-1",
+      "name": "Vizhinjam Harbour",
+      "lat": 8.3804,
+      "lon": 76.9896,
+      "district": "Thiruvananthapuram",
+      "confidence": "verified",
+      "report_count": 3,
+      "sources": ["CMFRI", "OSM"],
+      "facilities": { "ice": true, "fuel": true, "shelter": true, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "red",
+        "reason_en": "High wave warning and squally weather alert issued by INCOIS (cached).",
+        "reason_ml": "ഇൻകോയിസ് ഉയർന്ന തിരമാല മുന്നറിയിപ്പും പ്രതികൂല കാലാവസ്ഥയും നൽകിയിട്ടുണ്ട് (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": ["boat-1", "boat-2"]
+    },
+    {
+      "id": "site-2",
+      "name": "Neendakara Harbour",
+      "lat": 8.9412,
+      "lon": 76.5372,
+      "district": "Kollam",
+      "confidence": "verified",
+      "report_count": 2,
+      "sources": ["CMFRI", "PIB"],
+      "facilities": { "ice": true, "fuel": true, "shelter": true, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "green",
+        "reason_en": "Calm coastal waters with wave heights well below 1.0m (cached).",
+        "reason_ml": "ശാന്തമായ കടൽത്തീരവും 1.0 മീറ്ററിൽ താഴെ തിരമാലകളും (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-3",
+      "name": "Thottappally Spillway Landing",
+      "lat": 9.3248,
+      "lon": 76.3811,
+      "district": "Alappuzha",
+      "confidence": "verified",
+      "report_count": 2,
+      "sources": ["CMFRI", "OSM"],
+      "facilities": { "ice": true, "fuel": false, "shelter": true, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "amber",
+        "reason_en": "Caution advised near estuary mouth due to tidal swell turbulence (cached).",
+        "reason_ml": "വേലിയേറ്റ ഒഴുക്ക് കാരണം അഴിമുഖത്ത് ജാഗ്രത പാലിക്കുക (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": ["boat-6"]
+    },
+    {
+      "id": "site-4",
+      "name": "Munambam Mini Harbour",
+      "lat": 10.1834,
+      "lon": 76.1719,
+      "district": "Ernakulam",
+      "confidence": "medium",
+      "report_count": 1,
+      "sources": ["OSM"],
+      "facilities": { "ice": true, "fuel": true, "shelter": false, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1559827291-72ee739d0d9a?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "green",
+        "reason_en": "Safe conditions for small mechanized crafts (cached).",
+        "reason_ml": "ചെറിയ യന്ത്രവൽകൃത ബോട്ടുകൾക്ക് അനുയോജ്യം (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-5",
+      "name": "Chettuva Landing Centre",
+      "lat": 10.5312,
+      "lon": 76.0468,
+      "district": "Thrissur",
+      "confidence": "medium",
+      "report_count": 0,
+      "sources": ["CMFRI"],
+      "facilities": { "ice": false, "fuel": false, "shelter": true, "auction": false },
+      "photo": null,
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "green",
+        "reason_en": "Moderate sea with gentle breeze (cached).",
+        "reason_ml": "നേരിയ കാറ്റും സാധാരണ കടൽ അവസ്ഥയും (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-6",
+      "name": "Ponnani Harbour",
+      "lat": 10.7816,
+      "lon": 75.9231,
+      "district": "Malappuram",
+      "confidence": "verified",
+      "report_count": 3,
+      "sources": ["CMFRI", "PIB"],
+      "facilities": { "ice": true, "fuel": true, "shelter": true, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "amber",
+        "reason_en": "Shifting sandbars and swell surge at river mouth entrance (cached).",
+        "reason_ml": "നദീമുഖത്ത് മണൽത്തിട്ടകളും തിരമാല വ്യതിയാനങ്ങളും ശ്രദ്ധിക്കുക (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-7",
+      "name": "Beypore Port & Landing",
+      "lat": 11.1643,
+      "lon": 75.8087,
+      "district": "Kozhikode",
+      "confidence": "verified",
+      "report_count": 4,
+      "sources": ["CMFRI", "OSM"],
+      "facilities": { "ice": true, "fuel": true, "shelter": true, "auction": true },
+      "photo": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80",
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "green",
+        "reason_en": "Clear visibility and steady winds (cached).",
+        "reason_ml": "നല്ല കാഴ്ചാപരിധിയും അനുകൂല കാറ്റും (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T18:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-8",
+      "name": "Puthiyappa Fisheries Harbour",
+      "lat": 11.312,
+      "lon": 75.748,
+      "district": "Kozhikode",
+      "confidence": "low",
+      "report_count": 0,
+      "sources": ["OSM"],
+      "facilities": { "ice": false, "fuel": false, "shelter": false, "auction": false },
+      "photo": null,
+      "last_updated": "2026-10-23T14:00:00Z",
+      "signal": null,
+      "boats_at_sea": []
+    },
+    {
+      "id": "site-9",
+      "name": "Azhikkal Landing Centre",
+      "lat": 11.9171,
+      "lon": 75.3129,
+      "district": "Kannur",
+      "confidence": "low",
+      "report_count": 0,
+      "sources": ["CMFRI"],
+      "facilities": { "ice": true, "fuel": false, "shelter": false, "auction": true },
+      "photo": null,
+      "last_updated": "2026-10-24T00:00:00Z",
+      "signal": {
+        "light": "amber",
+        "reason_en": "Isolated rain squalls and choppy conditions (cached).",
+        "reason_ml": "ഒറ്റപ്പെട്ട മഴയും തീരക്കടലിൽ പ്രക്ഷുബ്ധതയും പ്രതീക്ഷിക്കുന്നു (ഓഫ്‌ലൈൻ).",
+        "valid_until": "2026-10-25T14:00:00Z",
+        "source_label": "cached"
+      },
+      "boats_at_sea": []
+    }
+  ],
+  "boats": [
+    { "id": "boat-1", "demo_name": "Sea King (Boat 1 demo)", "site_id": "site-1", "status": "out", "departed_at": "2026-10-24T04:30:00Z" },
+    { "id": "boat-2", "demo_name": "Ocean Star (Boat 2 demo)", "site_id": "site-1", "status": "out", "departed_at": "2026-10-24T05:15:00Z" },
+    { "id": "boat-3", "demo_name": "Coastal Pride (Boat 3 demo)", "site_id": "site-1", "status": "back", "departed_at": "2026-10-24T03:00:00Z" },
+    { "id": "boat-6", "demo_name": "Alappuzha Pearl (Boat 6 demo)", "site_id": "site-3", "status": "out", "departed_at": "2026-10-24T05:00:00Z" }
+  ]
+}
