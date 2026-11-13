@@ -1,0 +1,189 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.833308,
+     12.852704
+    ]
+   },
+   "properties": {
+    "id": "KR090",
+    "cmfri_code": "KR090",
+    "name": "Mangalore - Bunder",
+    "name_kn": "ಮಂಗಳೂರು ಬಂದರು",
+    "district": "Dakshina Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 250.0,
+    "fishing_depth_m": 200.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.862653,
+     12.764675
+    ]
+   },
+   "properties": {
+    "id": "KR093",
+    "cmfri_code": "KR093",
+    "name": "Talapady",
+    "name_kn": "ತಲಪಾಡಿ",
+    "district": "Dakshina Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 10.0,
+    "fishing_depth_m": 20.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.7012,
+     13.3466
+    ]
+   },
+   "properties": {
+    "id": "KR069",
+    "cmfri_code": "KR069",
+    "name": "Malpe - Harbour",
+    "name_kn": "ಮಲ್ಪೆ ಬಂದರು",
+    "district": "Udupi",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 250.0,
+    "fishing_depth_m": 200.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.534109,
+     13.967219
+    ]
+   },
+   "properties": {
+    "id": "KR045",
+    "cmfri_code": "KR045",
+    "name": "Bhatkal Bunder",
+    "name_kn": "ಭಟ್ಕಳ ಬಂದರು",
+    "district": "Uttara Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 50.0,
+    "fishing_depth_m": 55.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.278636,
+     14.662349
+    ]
+   },
+   "properties": {
+    "id": "KR013",
+    "cmfri_code": "KR013",
+    "name": "Gabitwada",
+    "name_kn": "ಗಾಬಿತವಾಡ",
+    "district": "Uttara Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 25.0,
+    "fishing_depth_m": 30.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.1124,
+     14.8002
+    ]
+   },
+   "properties": {
+    "id": "KR007",
+    "cmfri_code": "KR007",
+    "name": "Karwar F.H",
+    "name_kn": "ಕಾರವಾರ ಮೀನುಗಾರಿಕಾ ಬಂದರು",
+    "district": "Uttara Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 60.0,
+    "fishing_depth_m": 80.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.278636,
+     14.662349
+    ]
+   },
+   "properties": {
+    "id": "KR012",
+    "cmfri_code": "KR012",
+    "name": "Keni",
+    "name_kn": "ಕೆಣಿ",
+    "district": "Uttara Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 25.0,
+    "fishing_depth_m": 30.0
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     74.110594,
+     14.859005
+    ]
+   },
+   "properties": {
+    "id": "KR004",
+    "cmfri_code": "KR004",
+    "name": "Novbag - Devabag",
+    "name_kn": "ನೋವಬಾಗ್ - ದೇವಬಾಗ್",
+    "district": "Uttara Kannada",
+    "confidence_score": 30,
+    "confidence_label": "low",
+    "src_cmfri": 1,
+    "src_osm": 0,
+    "fishing_range_km": 25.0,
+    "fishing_depth_m": 30.0
+   }
+  }
+ ]
+}

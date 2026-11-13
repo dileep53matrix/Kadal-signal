@@ -1,0 +1,310 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-11-09T19:54:06Z",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "relation/5908934",
+      "properties": {
+        "@id": "relation/5908934",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Tadadi Port",
+        "name:kn": "ತದಡಿ",
+        "type": "multipolygon",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.3550627,
+          14.5245431
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "relation/18821078",
+      "properties": {
+        "@id": "relation/18821078",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "New Mangalore Port",
+        "name:kn": "ಹೊಸ ಮಂಗಳೂರು ಬಂದರು",
+        "name:ml": "പുതിയ മംഗലാപുരം തുറമുഖം",
+        "type": "multipolygon",
+        "wikidata": "Q23585035",
+        "wikimedia_commons": "Category:New Mangalore Port",
+        "wikipedia": "en:New Mangalore Port",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8167638,
+          12.9298195
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "relation/19994784",
+      "properties": {
+        "@id": "relation/19994784",
+        "craft": "boatbuilder",
+        "harbour": "yes",
+        "harbour:category": "shipyard",
+        "landuse": "industrial",
+        "name": "Udupi Cochin Shipyards ltd.",
+        "type": "multipolygon",
+        "waterway": "boatyard",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.6977167,
+          13.3481531
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/156026274",
+      "properties": {
+        "@id": "way/156026274",
+        "harbour": "yes",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Mangalore Fishing Port",
+        "port:category": "fishing",
+        "seamark:harbour:category": "fishing",
+        "seamark:type": "harbour",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8325653,
+          12.8598053
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/173008361",
+      "properties": {
+        "@id": "way/173008361",
+        "harbour": "yes",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Malpe Port",
+        "name:kn": "ಮಲ್ಪೆ ಬಂದರು",
+        "port:category": "fishing",
+        "seamark:harbour:category": "fishing",
+        "seamark:type": "harbour",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.6994488,
+          13.3475775
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/252751923",
+      "properties": {
+        "@id": "way/252751923",
+        "landuse": "harbour",
+        "name": "Karwar Port",
+        "name:kn": "ಕಾರವಾರ ಬಂದರು",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.1154405,
+          14.7995327
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/319706536",
+      "properties": {
+        "@id": "way/319706536",
+        "harbour": "yes",
+        "harbour:category": "shipyard",
+        "landuse": "industrial",
+        "name": "Bharti Shipyard Limited, Mangalore",
+        "name:kn": "ಭಾರತಿ ಶಿಪ್ಯಾರ್ಡ್",
+        "waterway": "boatyard",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8225188,
+          12.8733498
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/439978794",
+      "properties": {
+        "@id": "way/439978794",
+        "harbour": "yes",
+        "industrial": "port",
+        "landuse": "industrial",
+        "port": "fishing",
+        "seamark:harbour:category": "fishing",
+        "seamark:type": "harbour",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.4406363,
+          14.2761719
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/452433118",
+      "properties": {
+        "@id": "way/452433118",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Belekeri Port",
+        "name:kn": "ಬೇಲೇಕೇರಿ",
+        "port": "fishing",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.2573915,
+          14.7079172
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/481828184",
+      "properties": {
+        "@id": "way/481828184",
+        "harbour": "yes",
+        "industrial": "port",
+        "landuse": "industrial",
+        "port": "fishing",
+        "seamark:harbour:category": "fishing",
+        "seamark:type": "harbour",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.4317426,
+          14.27436
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/622955231",
+      "properties": {
+        "@id": "way/622955231",
+        "landuse": "harbour",
+        "name": "Karwar Port",
+        "name:kn": "ಕಾರವಾರ ಬಂದರು",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.1125398,
+          14.8008636
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/983123670",
+      "properties": {
+        "@id": "way/983123670",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Mechanised coal berth operated by UPCL",
+        "source": "survey;local knowledge;gps",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8131073,
+          12.9311524
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/983156161",
+      "properties": {
+        "@id": "way/983156161",
+        "landuse": "harbour",
+        "name": "Oil berth operated by NMPT",
+        "operator": "Draught: 14.00 mtrs, Lenth: 320 mtrs. For handling Crude and POL products for MRPL(captive user)",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8117313,
+          12.9171272
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1392107255",
+      "properties": {
+        "@id": "way/1392107255",
+        "industrial": "port",
+        "landuse": "industrial",
+        "name": "Amadalli Port",
+        "@geometry": "center"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.2283749,
+          14.7463584
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/3362882366",
+      "properties": {
+        "@id": "node/3362882366",
+        "harbour": "yes",
+        "name": "Mangalore Port",
+        "seamark:type": "harbour"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.8129689,
+          12.9276694
+        ]
+      }
+    }
+  ]
+}

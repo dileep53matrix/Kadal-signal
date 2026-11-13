@@ -1,0 +1,36 @@
+{
+ "elements": [
+  {
+   "type": "node",
+   "lat": 13.352,
+   "lon": 74.703,
+   "tags": {
+    "name": "Malpe Harbour"
+   }
+  },
+  {
+   "type": "node",
+   "lat": 14.82,
+   "lon": 74.13,
+   "tags": {
+    "name": "Karwar Port"
+   }
+  },
+  {
+   "type": "node",
+   "lat": 12.9,
+   "lon": 74.8,
+   "tags": {
+    "name": "New Mangalore Port"
+   }
+  },
+  {
+   "type": "node",
+   "lat": 13.97,
+   "lon": 74.535,
+   "tags": {
+    "name": "Bhatkal Fishing Harbour"
+   }
+  }
+ ]
+}

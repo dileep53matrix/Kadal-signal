@@ -1,0 +1,8 @@
+[out:json][timeout:60];
+(
+  nwr["seamark:type"="harbour"](12.7,74.0,14.95,75.0);
+  nwr["harbour"="yes"](12.7,74.0,14.95,75.0);
+  nwr["landuse"="harbour"](12.7,74.0,14.95,75.0);
+  nwr["industrial"="port"](12.7,74.0,14.95,75.0);
+);
+out center;

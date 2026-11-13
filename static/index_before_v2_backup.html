@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071f2b">
+<title>Kadal Signal | Coastal Intelligence</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{
+  --ink:#102d38;--muted:#6e858b;--line:#e1eaeb;--paper:#f3f7f6;--white:#fff;
+  --deep:#071f2b;--deep2:#0b3541;--teal:#18b6a1;--teal-dark:#087f79;
+  --green:#15966b;--amber:#e5a02a;--red:#d94b45;--grey:#879697;
+  --shadow:0 18px 50px rgba(13,47,57,.08);--soft-shadow:0 5px 18px rgba(13,47,57,.05);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}
+.top{
+  position:relative;isolation:isolate;overflow:hidden;color:#fff;
+  background:radial-gradient(ellipse at 82% 0%,rgba(24,182,161,.25),transparent 35%),
+             linear-gradient(115deg,#061923 0%,#0a303c 58%,#0c4a4b 100%);
+  padding:18px max(22px,calc((100vw - 1480px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;
+}
+.top:after{content:"";position:absolute;z-index:-1;width:440px;height:190px;right:10%;bottom:-145px;border:1px solid #ffffff16;border-radius:50%;box-shadow:0 0 0 22px #ffffff08,0 0 0 48px #ffffff06,0 0 0 76px #ffffff04;transform:rotate(-9deg)}
+.brand{display:flex;align-items:center;gap:13px;min-width:0}
+.logo{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#1bc6ad,#087a79);display:grid;place-items:center;font-size:24px;box-shadow:0 8px 24px #13bba533}
+.brand h1{font-family:Manrope,sans-serif;font-size:19px;letter-spacing:1.8px;margin:0;font-weight:800}
+.brand p{margin:3px 0 0;color:#a9c9c9;font-size:11px;letter-spacing:.35px}
+.topright{display:flex;gap:10px;align-items:center}
+.pill{border:1px solid #ffffff2c;color:#e9ffff;background:#ffffff0d;padding:9px 13px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.5px;backdrop-filter:blur(8px)}
+#langBtn{transition:.2s}#langBtn:hover{background:#ffffff20;border-color:#ffffff66}
+.wrap{max-width:1480px;margin:auto;padding:26px 24px 38px}
+.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;margin-bottom:22px}
+.eyebrow{display:flex;align-items:center;gap:8px;color:var(--teal-dark);font-size:10px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;margin-bottom:8px}
+.eyebrow:before{content:"";width:21px;height:2px;background:var(--teal);border-radius:2px}
+.intro h2{margin:0;font-family:Manrope,sans-serif;font-size:clamp(24px,3vw,34px);line-height:1.15;letter-spacing:-1.1px;color:#102e39}
+.intro p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:620px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(105px,1fr));gap:10px;min-width:min(510px,50%)}
+.stat{position:relative;background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px 15px;min-width:0;box-shadow:var(--soft-shadow);overflow:hidden}
+.stat:after{content:"";position:absolute;width:42px;height:42px;right:-15px;bottom:-18px;border-radius:50%;background:#e8f6f2}
+.stat b{position:relative;z-index:1;display:block;font-family:Manrope,sans-serif;font-size:22px;line-height:1.1;color:#123a43;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{position:relative;z-index:1;display:block;margin-top:6px;font-size:10px;letter-spacing:.25px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.toolbar{display:grid;grid-template-columns:minmax(230px,1.7fr) repeat(2,minmax(155px,.8fr)) auto;gap:10px;margin-bottom:14px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--soft-shadow)}
+.field{height:44px;border:1px solid #e2ebeb;background:#f8fbfa;border-radius:10px;padding:0 13px;color:var(--ink);outline:none;width:100%;font-size:12px;transition:.2s}
+.field:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px #12a59418}
+.field::placeholder{color:#91a3a5}
+.btn{border:0;border-radius:10px;background:linear-gradient(135deg,#0b7775,#0b555d);color:#fff;padding:0 17px;font-weight:700;font-size:12px;box-shadow:0 5px 12px #0b777522;transition:transform .18s,box-shadow .18s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px #0b777533}
+.btn.secondary{background:#edf5f3;color:#28565a;box-shadow:none}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(350px,.85fr);gap:15px;align-items:stretch}
+.mapbox,.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.maphead{padding:15px 18px;border-bottom:1px solid #edf2f1;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:67px}
+.maphead strong{font-family:Manrope,sans-serif;font-size:14px;color:#153a43}
+.maphead small{display:inline-block;margin-top:3px;color:var(--muted);font-size:10px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:#61777b;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+#map{height:610px;width:100%;background:#e6efeb}
+.leaflet-container{font-family:'DM Sans',sans-serif}
+.leaflet-control-zoom a{color:#16434b!important;border-color:#e2ebeb!important}
+.panel{display:flex;flex-direction:column;min-height:660px}
+.panelhead{padding:16px 18px;border-bottom:1px solid #edf2f1;background:linear-gradient(110deg,#fff,#f8fbfa)}
+.panelhead h3{margin:0;font-family:Manrope,sans-serif;font-size:15px;color:#153a43}
+.panelhead p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.sitecontent{padding:17px;overflow:auto;max-height:610px}
+.empty{padding:34px 15px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+.site-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.site-title h2{font-family:Manrope,sans-serif;font-size:19px;line-height:1.25;margin:0 0 5px;color:#153a43}
+.site-title .kn{font-family:'DM Sans',sans-serif;font-size:12px;color:#6e858b;font-weight:500;display:inline-block}
+.subline{font-size:10px;color:var(--muted);letter-spacing:.2px}
+.signal{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:99px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.55px;white-space:nowrap}
+.signal.green{background:#e4f5ed;color:#08754f}.signal.amber{background:#fff3dc;color:#95600b}.signal.red{background:#fde9e7;color:#b52f2a}.signal.grey{background:#edf1f0;color:#596663}
+.reason{margin:15px 0;padding:13px 14px;border-radius:12px;background:linear-gradient(120deg,#f0f8f6,#f8fbfa);border:1px solid #e0eeea;font-size:11px;line-height:1.6;color:#31535a}
+.reason strong{display:block;margin-bottom:4px;color:#153e45;font-size:10px;text-transform:uppercase;letter-spacing:.8px}
+.reason .knreason{display:block;color:#536e68;margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0}
+.mini{padding:11px 12px;border:1px solid #e7eeee;border-radius:11px;background:#fbfdfc;min-width:0}
+.mini span{display:block;color:#819397;font-size:9px;letter-spacing:.55px;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.mini b{display:block;font-size:12px;line-height:1.4;color:#1c4148;overflow-wrap:anywhere}
+.section{margin-top:17px}
+.section h4{font-size:9px;text-transform:uppercase;letter-spacing:1.1px;color:#688087;margin:0 0 8px;font-weight:800}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;background:#edf6f2;color:#315a50;padding:7px 9px;border-radius:8px;font-weight:600}
+.reportbtn{width:100%;height:43px;margin-top:17px}
+.list{border-top:1px solid #edf2f1;padding:13px 15px;max-height:225px;overflow:auto;background:#fcfdfd}
+.listhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.listhead b{font-size:9px;letter-spacing:1px;color:#6c8589}
+.site-row{width:100%;border:0;border-bottom:1px solid #eff3f2;background:transparent;text-align:left;padding:10px 7px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--ink);border-radius:8px;transition:background .15s}
+.site-row:hover{background:#eff7f4}
+.site-row strong{font-size:11px;display:block;color:#1c4148}
+.site-row small{font-size:9px;color:var(--muted)}
+.site-row .right{display:flex;align-items:center;gap:6px}
+.tiny{font-size:9px;color:var(--muted)}
+.foot{font-size:10px;color:#7a8e91;padding:14px 3px 0;line-height:1.6}
+.disclaimer{display:flex;gap:10px;align-items:flex-start;background:#fff8e9;border:1px solid #f0dfbd;color:#73531c;padding:12px 14px;border-radius:12px;font-size:10px;line-height:1.55;margin-top:15px}
+.disclaimer:before{content:"!";flex:0 0 19px;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;background:#f3dfb6;color:#795615;font-weight:900;font-size:12px}
+.modalback{position:fixed;inset:0;background:#061e1dcc;backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px;z-index:2000}
+.modalback.show{display:flex}
+.modal{width:min(520px,100%);max-height:92vh;overflow:auto;background:white;border-radius:18px;padding:22px;box-shadow:0 25px 80px #0005}
+.modal h3{margin:0 0 5px;font-family:Manrope,sans-serif;color:#153a43}
+.modal p{color:var(--muted);font-size:11px;margin:0 0 15px;line-height:1.5}
+.modal label{font-size:11px;font-weight:700;display:block;margin:12px 0 5px}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:7px}
+.check{border:1px solid var(--line);border-radius:9px;padding:10px;font-size:11px;display:flex;gap:8px;align-items:center;background:#fbfdfc}
+.modalactions{display:flex;gap:8px;margin-top:17px}
+.modalactions button{height:42px;flex:1}
+.notice{margin-top:12px;font-size:11px;line-height:1.5}
+.leaflet-popup-content{font-family:'DM Sans',sans-serif}
+.marker-pin{width:15px;height:15px;border-radius:50%;border:3px solid white;box-shadow:0 1px 7px #1238}
+.loading{padding:30px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:1050px){.intro{align-items:flex-start;flex-direction:column}.stats{width:100%;min-width:0}.layout{grid-template-columns:minmax(0,1.2fr) minmax(310px,.9fr)}}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.panel{min-height:0}.sitecontent{max-height:none}.list{max-height:250px}#map{height:470px}.toolbar{grid-template-columns:1fr 1fr}.toolbar .search{grid-column:1/-1}.top{padding:16px 18px}}
+@media(max-width:520px){
+ .top{padding:13px 14px}.brand h1{font-size:16px}.brand p{font-size:9px}.logo{width:40px;height:40px}.topright .pill:first-child{display:none}
+ .wrap{padding:19px 12px 28px}.intro h2{font-size:25px}.intro p{font-size:11px}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:11px 12px}.stat b{font-size:20px}
+ .toolbar{grid-template-columns:1fr 1fr;padding:9px;gap:8px}.toolbar .search{grid-column:1/-1}.field{height:42px;font-size:11px}.toolbar .btn{height:42px}
+ #map{height:410px}.maphead{align-items:flex-start;flex-direction:column;gap:8px}.legend{gap:10px}
+ .panel{border-radius:15px}.panelhead{padding:14px}.sitecontent{padding:14px}.grid2{gap:7px}.mini{padding:9px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo">🌊</div>
+    <div><h1>KADAL SIGNAL</h1><p>COASTAL INTELLIGENCE · KARNATAKA</p></div>
+  </div>
+  <div class="topright">
+    <span class="pill">● &nbsp;KARNATAKA PILOT · 93 SITES</span>
+    <button class="pill" id="langBtn" type="button">ಕನ್ನಡ</button>
+  </div>
+</header>
+<main class="wrap">
+  <section class="intro">
+    <div>
+      <div class="eyebrow">COASTAL MONITORING PLATFORM</div>
+      <h2 id="pageTitle">Coastal situation map</h2>
+      <p id="pageSub">Explore landing centres, local reports and the latest available sea-state signal.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="totalCount">—</b><span>Landing centres</span></div>
+      <div class="stat"><b id="verifiedCount">—</b><span>Verified sites</span></div>
+      <div class="stat"><b id="redCount">—</b><span>Red signals</span></div>
+      <div class="stat"><b id="updatedAt">—</b><span>Signal update</span></div>
+    </div>
+  </section>
+  <div class="toolbar">
+    <input class="field search" id="search" placeholder="⌕  Search site, CMFRI code, district or taluk…">
+    <select class="field" id="district"><option value="">All districts</option></select>
+    <select class="field" id="signalFilter"><option value="">All signal colours</option><option value="green">Green</option><option value="amber">Amber</option><option value="red">Red</option><option value="grey">Grey / unavailable</option></select>
+    <button class="btn" id="reset">Reset filters</button>
+  </div>
+  <div class="layout">
+    <section class="mapbox">
+      <div class="maphead">
+        <div><strong id="mapTitle">Karnataka coast</strong><br><small id="mapSub">Select a marker to view landing-centre details</small></div>
+        <div class="legend">
+          <span><i class="dot" style="background:var(--green)"></i>Green</span>
+          <span><i class="dot" style="background:var(--amber)"></i>Amber</span>
+          <span><i class="dot" style="background:var(--red)"></i>Red</span>
+          <span><i class="dot" style="background:var(--grey)"></i>Unavailable</span>
+        </div>
+      </div>
+      <div id="map"><div class="loading">Loading coastal map…</div></div>
+    </section>
+    <aside class="panel">
+      <div class="panelhead"><h3 id="detailTitle">Landing-centre details</h3><p id="detailSub">Choose a map marker or a site from the list.</p></div>
+      <div class="sitecontent" id="siteDetail"><div class="empty">🌊<br><br>Select a landing centre on the map to see its details.</div></div>
+      <div class="list"><div class="listhead"><b id="listTitle">LANDING CENTRES</b><span class="tiny" id="resultCount">Loading…</span></div><div id="siteList"></div></div>
+    </aside>
+  </div>
+  <div class="disclaimer"><span><b>Important:</b> Kadal Signal is a prototype decision-support display, not an official fishing, weather or navigation advisory. Signal colours use experimental thresholds and available forecast data. Always follow official IMD/INCOIS and fisheries-department advisories. Cached forecasts may be older than live data.</span></div>
+  <div class="foot">Landing-centre source: ICAR-CMFRI. Map tiles and geographic data: © OpenStreetMap contributors. Kannada labels are currently partial and require review by a fluent Kannada speaker.</div>
+</main>
+<div class="modalback" id="reportModal">
+  <div class="modal">
+    <h3 id="reportTitle">Community site report</h3>
+    <p id="reportIntro">Use a made-up reporter ID (not your name or phone number). A second matching report is needed for verification.</p>
+    <form id="reportForm">
+      <label for="reporter">Reporter ID</label>
+      <input class="field" id="reporter" required pattern="[A-Za-z0-9_-]{1,40}" placeholder="Example: fisher-demo-02">
+      <label>Are these facilities available at this site?</label>
+      <div class="checkgrid">
+        <label class="check"><input type="checkbox" id="ice"> Ice</label>
+        <label class="check"><input type="checkbox" id="fuel"> Fuel</label>
+        <label class="check"><input type="checkbox" id="shelter"> Shelter</label>
+        <label class="check"><input type="checkbox" id="auction"> Auction</label>
+      </div>
+      <div class="notice" id="reportNotice">This report will be stored for community verification. Do not enter personal information.</div>
+      <div class="modalactions"><button type="button" class="btn secondary" id="cancelReport">Cancel</button><button type="submit" class="btn">Submit report</button></div>
+      <div class="notice" id="reportResult" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const $=id=>document.getElementById(id);let sites=[],markers=new Map(),selected=null,lang='en',map=null,layer=null;
+const words={en:{title:'Coastal situation map',sub:'Explore landing centres, local reports and the latest available sea-state signal.',search:'Search site, CMFRI code, district or taluk…',details:'Landing-centre details',choose:'Choose a map marker or a site from the list.',list:'LANDING CENTRES',none:'No sites match these filters.',report:'Community site report',submit:'Submit report',verified:'Verified',pending:'Pending',conflict:'Conflict',noneStatus:'No reports',signal:{green:'Green',amber:'Amber',red:'Red',grey:'Unavailable'},reason:'Signal reason',facilities:'Reported facilities',verification:'Community verification',weather:'Forecast details',wave:'Maximum forecast wave',alert:'INCOIS alert state',source:'Forecast source',confidence:'Atlas confidence',reports:'Community reports',code:'CMFRI code',district:'District',taluk:'Taluk',coords:'Coordinates',fishing:'Fishing range / depth',period:'Operation period',last:'Last verified',noSignal:'No current signal is available for this site.',privacy:'Report using a made-up ID only. Do not enter your name or phone number.'},kn:{title:'ಕರಾವಳಿ ಸ್ಥಿತಿ ನಕ್ಷೆ',sub:'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರಗಳು, ಸ್ಥಳೀಯ ವರದಿಗಳು ಮತ್ತು ಲಭ್ಯವಿರುವ ಸಮುದ್ರ ಸ್ಥಿತಿಯ ಸಂಕೇತವನ್ನು ನೋಡಿ.',search:'ಕೇಂದ್ರ, CMFRI ಕೋಡ್, ಜಿಲ್ಲೆ ಅಥವಾ ತಾಲ್ಲೂಕು ಹುಡುಕಿ…',details:'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರದ ವಿವರಗಳು',choose:'ವಿವರಗಳನ್ನು ನೋಡಲು ನಕ್ಷೆಯ ಗುರುತು ಅಥವಾ ಪಟ್ಟಿಯಲ್ಲಿರುವ ಕೇಂದ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.',list:'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರಗಳು',none:'ಈ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಹೊಂದುವ ಕೇಂದ್ರಗಳಿಲ್ಲ.',report:'ಸಮುದಾಯದ ಸ್ಥಳ ವರದಿ',submit:'ವರದಿ ಸಲ್ಲಿಸಿ',verified:'ಪರಿಶೀಲಿಸಲಾಗಿದೆ',pending:'ಬಾಕಿಯಿದೆ',conflict:'ವಿರೋಧಾಭಾಸ',noneStatus:'ವರದಿಗಳಿಲ್ಲ',signal:{green:'ಹಸಿರು',amber:'ಹಳದಿ',red:'ಕೆಂಪು',grey:'ಲಭ್ಯವಿಲ್ಲ'},reason:'ಸಂಕೇತದ ಕಾರಣ',facilities:'ವರದಿಯಾದ ಸೌಲಭ್ಯಗಳು',verification:'ಸಮುದಾಯ ಪರಿಶೀಲನೆ',weather:'ಮುನ್ಸೂಚನೆ ವಿವರಗಳು',wave:'ಗರಿಷ್ಠ ಅಲೆ ಎತ್ತರ',alert:'INCOIS ಎಚ್ಚರಿಕೆ ಸ್ಥಿತಿ',source:'ಮುನ್ಸೂಚನೆ ಮೂಲ',confidence:'ಅಟ್ಲಸ್ ವಿಶ್ವಾಸಾರ್ಹತೆ',reports:'ಸಮುದಾಯ ವರದಿಗಳು',code:'CMFRI ಕೋಡ್',district:'ಜಿಲ್ಲೆ',taluk:'ತಾಲ್ಲೂಕು',coords:'ನಿರ್ದೇಶಾಂಕಗಳು',fishing:'ಮೀನುಗಾರಿಕೆ ವ್ಯಾಪ್ತಿ / ಆಳ',period:'ಕಾರ್ಯಾಚರಣೆಯ ಅವಧಿ',last:'ಕೊನೆಯ ಪರಿಶೀಲನೆ',noSignal:'ಈ ಕೇಂದ್ರಕ್ಕೆ ಪ್ರಸ್ತುತ ಸಂಕೇತ ಲಭ್ಯವಿಲ್ಲ.',privacy:'ಕಲ್ಪಿತ ID ಬಳಸಿ ಮಾತ್ರ ವರದಿ ಮಾಡಿ. ನಿಮ್ಮ ಹೆಸರು ಅಥವಾ ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಬೇಡಿ.'}};
+function t(k){return words[lang][k]||words.en[k]||k}function sig(s){return s?.color||'grey'}function esc(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function label(v){return v==='verified'?t('verified'):v==='pending'?t('pending'):v==='conflict'?t('conflict'):t('noneStatus')}
+function icon(color){const c={green:'#15966b',amber:'#e8a22a',red:'#d94b45',grey:'#84918f'}[color]||'#84918f';return L.divIcon({className:'',html:`<div class="marker-pin" style="background:${c}"></div>`,iconSize:[17,17],iconAnchor:[8,8]})}
+function initMap(){if(!window.L){$('map').innerHTML='<div class="empty">Map library could not load. Check your internet connection, then refresh this page. The site list and details can still load.</div>';return}map=L.map('map').setView([14.15,74.9],7);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);layer=L.featureGroup().addTo(map)}
+function filtered(){const q=$('search').value.trim().toLowerCase(),d=$('district').value,s=$('signalFilter').value;return sites.filter(x=>(!q||[x.name,x.name_kn,x.cmfri_code,x.district,x.taluk,x.id].some(v=>String(v||'').toLowerCase().includes(q)))&&(!d||x.district===d)&&(!s||sig(x.signal)===s))}
+function render(){const arr=filtered();$('resultCount').textContent=`${arr.length} / ${sites.length}`;$('siteList').innerHTML=arr.map(x=>`<button class="site-row" data-id="${esc(x.id)}"><span><strong>${esc(x.name)}</strong><small>${esc(x.cmfri_code||x.id)} · ${esc(x.district||'')}</small></span><span class="right"><i class="dot" style="background:${({green:'var(--green)',amber:'var(--amber)',red:'var(--red)',grey:'var(--grey)'})[sig(x.signal)]}"></i><span class="tiny">${t('signal')[sig(x.signal)]}</span></span></button>`).join('')||`<div class="empty">${t('none')}</div>`;document.querySelectorAll('.site-row').forEach(b=>b.addEventListener('click',()=>selectSite(b.dataset.id,true)));if(layer){layer.clearLayers();markers.clear();arr.forEach(x=>{if(!Number.isFinite(+x.lat)||!Number.isFinite(+x.lon))return;const m=L.marker([+x.lat,+x.lon],{icon:icon(sig(x.signal))}).bindTooltip(`${esc(x.name)} · ${esc(x.cmfri_code||x.id)}`);m.on('click',()=>selectSite(x.id,false));m.addTo(layer);markers.set(x.id,m)});if(arr.length&&map&&!selected)map.fitBounds(layer.getBounds().pad(.12));}if(selected&&!arr.some(x=>x.id===selected))selected=null;if(!selected&&arr.length)showPlaceholder();}
+function showPlaceholder(){$('siteDetail').innerHTML=`<div class="empty">🌊<br><br>${t('choose')}</div>`}
+function selectSite(id,zoom){const x=sites.find(z=>z.id===id);if(!x)return;selected=id;const s=x.signal||{},c=sig(s),r=x.reports||{},fac=x.facilities||{};const reason=lang==='kn'?(s.reason_kn||s.reason_en):s.reason_en;const status=label(x.confidence_label);const facNames=['ice','fuel','shelter','auction'];const tags=fac?facNames.filter(k=>fac[k]===true).map(k=>({ice:'Ice',fuel:'Fuel',shelter:'Shelter',auction:'Auction'}[k])):[];$('siteDetail').innerHTML=`<div class="site-title"><div><h2>${esc(x.name)} ${x.name_kn?`<span class="kn">${esc(x.name_kn)}</span>`:''}</h2><div class="subline">${esc(x.district)} · ${esc(x.taluk)} · ${esc(x.cmfri_code||x.id)}</div></div><span class="signal ${c}"><i class="dot" style="background:currentColor"></i>${t('signal')[c]}</span></div><div class="reason"><strong>${t('reason')}</strong>${reason?esc(reason):t('noSignal')}${s.disclaimer_en?`<span class="kn">${esc(lang==='kn'?(s.disclaimer_kn||s.disclaimer_en):s.disclaimer_en)}</span>`:''}</div><div class="grid2"><div class="mini"><span>${t('confidence')}</span><b>${esc(x.confidence_score)} / 100 · ${esc(x.confidence_label)}</b></div><div class="mini"><span>${t('verification')}</span><b>${esc(status)}</b></div><div class="mini"><span>${t('reports')}</span><b>${esc(r.counted||0)} counted / ${esc(r.total||0)} total</b></div><div class="mini"><span>${t('wave')}</span><b>${s.max_wave_m!=null?esc(s.max_wave_m)+' m':'—'}</b></div></div><div class="section"><h4>${t('weather')}</h4><div class="grid2"><div class="mini"><span>${t('alert')}</span><b>${esc(s.alert_state||'unknown')}</b></div><div class="mini"><span>${t('source')}</span><b>${esc(s.forecast_source||'—')}${s.simulated?' · SIMULATED':''}</b></div></div></div><div class="section"><h4>${t('facilities')}</h4><div class="tags">${tags.length?tags.map(v=>`<span class="tag">✓ ${v}</span>`).join(''):'<span class="tiny">No verified facility information yet</span>'}</div></div><div class="section"><h4>Site information</h4><div class="grid2"><div class="mini"><span>${t('code')}</span><b>${esc(x.cmfri_code||x.id)}</b></div><div class="mini"><span>${t('coords')}</span><b>${(+x.lat).toFixed(4)}, ${(+x.lon).toFixed(4)}</b></div><div class="mini"><span>${t('fishing')}</span><b>${esc(x.fishing_range_km??'—')} km / ${esc(x.fishing_depth_m??'—')} m</b></div><div class="mini"><span>${t('last')}</span><b>${x.last_verified?esc(new Date(x.last_verified).toLocaleDateString()):'—'}</b></div></div></div><button class="btn reportbtn" id="openReport">＋ ${t('report')}</button>`;$('detailTitle').textContent=t('details');$('detailSub').textContent=`${x.name} · ${x.cmfri_code||x.id}`;$('openReport').addEventListener('click',()=>openReport(x));if(zoom&&map&&markers.has(id)){map.setView(markers.get(id).getLatLng(),11);markers.get(id).openTooltip()}document.querySelectorAll('.site-row').forEach(b=>b.style.background=b.dataset.id===id?'#eef7f3':'#fff')}
+function openReport(x){$('reportModal').classList.add('show');$('reportTitle').textContent=`${t('report')} · ${x.name}`;$('reportIntro').textContent=t('privacy');$('reportResult').textContent='';$('reportForm').dataset.siteId=x.id}
+$('reportForm').addEventListener('submit',async e=>{e.preventDefault();const id=e.currentTarget.dataset.siteId;const payload={reporter_id:$('reporter').value.trim(),facilities:{ice:$('ice').checked,fuel:$('fuel').checked,shelter:$('shelter').checked,auction:$('auction').checked}};$('reportResult').textContent='Submitting…';try{const res=await fetch(`/api/sites/${encodeURIComponent(id)}/contributions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Could not submit report');$('reportResult').textContent=data.message;$('reportResult').style.color='#08754f';await loadData();selectSite(id,false);setTimeout(()=>$('reportModal').classList.remove('show'),2200)}catch(err){$('reportResult').textContent=err.message;$('reportResult').style.color='#b52f2a'}});
+async function loadData(){try{const r=await fetch('/api/sites',{cache:'no-store'});if(!r.ok)throw new Error('API returned '+r.status);sites=await r.json();$('totalCount').textContent=sites.length;$('verifiedCount').textContent=sites.filter(x=>x.confidence_label==='verified').length;$('redCount').textContent=sites.filter(x=>sig(x.signal)==='red').length;const dates=sites.map(x=>x.signal?.valid_from).filter(Boolean).sort();$('updatedAt').textContent=dates.length?new Date(dates[dates.length-1]).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';const districts=[...new Set(sites.map(x=>x.district).filter(Boolean))].sort();$('district').innerHTML='<option value="">All districts</option>'+districts.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');render();if(selected)selectSite(selected,false)}catch(e){$('siteDetail').innerHTML=`<div class="empty">Could not load sites: ${esc(e.message)}<br>Make sure <b>python server.py</b> is running.</div>`;$('resultCount').textContent='API unavailable'}}
+function setLang(){const w=words[lang];$('pageTitle').textContent=w.title;$('pageSub').textContent=w.sub;$('search').placeholder=w.search;$('detailTitle').textContent=w.details;$('detailSub').textContent=w.choose;$('listTitle').textContent=w.list;$('mapTitle').textContent=lang==='kn'?'ಕರ್ನಾಟಕ ಕರಾವಳಿ':'Karnataka coast';$('mapSub').textContent=lang==='kn'?'ವಿವರಗಳಿಗಾಗಿ ನಕ್ಷೆಯ ಗುರುತನ್ನು ಆಯ್ಕೆಮಾಡಿ':'Select a marker to view landing-centre details';$('langBtn').textContent=lang==='en'?'ಕನ್ನಡ':'English';render();if(selected)selectSite(selected,false);else showPlaceholder()}
+$('search').addEventListener('input',render);$('district').addEventListener('change',render);$('signalFilter').addEventListener('change',render);$('reset').addEventListener('click',()=>{$('search').value='';$('district').value='';$('signalFilter').value='';selected=null;render();showPlaceholder()});$('langBtn').addEventListener('click',()=>{lang=lang==='en'?'kn':'en';setLang()});$('cancelReport').addEventListener('click',()=>$('reportModal').classList.remove('show'));$('reportModal').addEventListener('click',e=>{if(e.target===$('reportModal'))$('reportModal').classList.remove('show')});
+initMap();loadData();setInterval(loadData,180000);
+
+</script>
+</body>
+</html>

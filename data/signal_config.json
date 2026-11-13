@@ -1,0 +1,13 @@
+{
+  "_note": "PLACEHOLDER numbers for practice. They are NOT safety standards. Validate with INCOIS / CMFRI / a fisheries officer before anyone relies on them.",
+  "amber_wave_m": 1.5,
+  "red_wave_m": 2.5,
+  "forecast_window_hours": 12,
+  "validity_hours": 12,
+  "offshore_bearing_deg": 270,
+  "offshore_min_km": 5,
+  "offshore_max_km": 20,
+  "forecast_fresh_hours": 3,
+  "forecast_max_age_hours": 12,
+  "alert_unknown_policy": "amber"
+}
