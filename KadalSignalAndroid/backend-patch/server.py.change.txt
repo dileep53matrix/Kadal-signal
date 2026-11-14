@@ -1,0 +1,14 @@
+In your current app/server.py, change the make_server function from:
+
+def make_server(port=8000):
+    db.init().close()
+    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+
+to:
+
+def make_server(port=8000, host=None):
+    db.init().close()
+    host = host or os.environ.get("KADAL_HOST", "0.0.0.0")
+    return ThreadingHTTPServer((host, port), Handler)
+
+This allows your phone/emulator on the same network to reach the API. Keep this for trusted local hackathon Wi-Fi only. Do not expose the development server directly to the public internet; it has no authentication for community reports and is a prototype API.
