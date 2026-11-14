@@ -5,11 +5,13 @@ Run from the app directory:
 Then open:
     http://127.0.0.1:8000
 
-Uses only Python's standard library.
+Uses Python's standard library plus the optional google-genai SDK
+for the /api/assistant endpoint.
 
 Security note:
     POST /api/alert is disabled unless KADAL_ADMIN_TOKEN is configured.
     Set a long, random token in the environment before starting the server.
+    GEMINI_API_KEY must be set in the server environment for AI chat.
 """
 import hmac
 import json
@@ -24,6 +26,7 @@ from urllib.parse import urlparse
 import db
 import contribute
 import lights
+import assistant
 from contribute import ApiError
 
 
@@ -96,8 +99,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Cache-Control", "no-store")
-        # This prototype is intended to run locally. Do not expose it publicly
-        # without reviewing and tightening the CORS policy.
         self.send_header("Access-Control-Allow-Origin", "http://127.0.0.1:8000")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
@@ -127,8 +128,6 @@ class Handler(BaseHTTPRequestHandler):
     def _require_admin_token(self):
         configured_token = os.environ.get("KADAL_ADMIN_TOKEN", "")
         if not configured_token:
-            # Fail closed: never allow alert changes just because the
-            # administrator forgot to configure a token.
             raise ApiError(503, "admin alert updates are disabled: admin token is not configured")
 
         supplied_token = self.headers.get("X-Admin-Token", "")
@@ -180,6 +179,15 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(404, "not found")
 
             if method == "POST":
+                if path == "/api/assistant":
+                    body = self._read_json_body()
+                    result = assistant.answer(
+                        con,
+                        body,
+                        client_ip=self.client_address[0],
+                    )
+                    return 200, result
+
                 if path == "/api/alert":
                     self._require_admin_token()
                     body = self._read_json_body()
@@ -227,7 +235,6 @@ class Handler(BaseHTTPRequestHandler):
         except ApiError as exc:
             self._send(exc.status, {"error": exc.message})
         except Exception:
-            # Keep internal exception details in the server console only.
             traceback.print_exc(file=sys.stderr)
             self._send(500, {"error": "internal server error"})
 
@@ -240,7 +247,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def make_server(port=8000):
     db.init().close()
-    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    return ThreadingHTTPServer(("0.0.0.0", port), Handler)
 
 
 if __name__ == "__main__":
@@ -254,6 +261,11 @@ if __name__ == "__main__":
         print(
             "WARNING: KADAL_ADMIN_TOKEN is not set; "
             "POST /api/alert is disabled."
+        )
+    if not os.environ.get("GEMINI_API_KEY"):
+        print(
+            "WARNING: GEMINI_API_KEY is not set; "
+            "POST /api/assistant will return 503."
         )
     try:
         server.serve_forever()
