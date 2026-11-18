@@ -250,26 +250,32 @@ def make_server(port=8000):
     return ThreadingHTTPServer(("0.0.0.0", port), Handler)
 
 
+
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
     server = make_server(port)
+
     print(
         f"Kadal Signal API running: http://127.0.0.1:{port} "
         "(stop with Ctrl+C)"
     )
+
     if not os.environ.get("KADAL_ADMIN_TOKEN"):
         print(
             "WARNING: KADAL_ADMIN_TOKEN is not set; "
             "POST /api/alert is disabled."
         )
-    if not os.environ.get("GEMINI_API_KEY"):
+
+    if not os.environ.get("GROQ_API_KEY"):
         print(
-            "WARNING: GEMINI_API_KEY is not set; "
+            "WARNING: GROQ_API_KEY is not set; "
             "POST /api/assistant will return 503."
         )
+
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nstopped")
     finally:
         server.server_close()
+
