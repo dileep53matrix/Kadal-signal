@@ -1,0 +1,566 @@
+
+
+========== COMPLETE DATABASE FILE ==========
+
+1: """Step 1: database schema for Kadal Signal (Karnataka pilot). SQLite, no setup needed."""
+2: import os, sqlite3, pathlib
+3: 
+4: DB_PATH = pathlib.Path(os.environ.get("KADAL_DB") or (pathlib.Path(__file__).resolve().parent.parent / "data" / "kadal.db"))
+5: 
+6: SCHEMA = """
+7: CREATE TABLE IF NOT EXISTS sites (
+8:     id TEXT PRIMARY KEY,              -- e.g. KA-001
+9:     cmfri_code TEXT,                  -- CMFRI code, e.g. KR069
+10:     taluk TEXT,
+11:     gears TEXT,                       -- gears operated (CMFRI text)
+12:     operation_period TEXT,            -- CMFRI text, e.g. 'Sep to May'
+13:     colocated_with TEXT,              -- other site(s) with identical coordinates
+14:     name TEXT NOT NULL,
+15:     name_kn TEXT,                     -- Kannada name
+16:     district TEXT,
+17:     lat REAL NOT NULL,
+18:     lon REAL NOT NULL,
+19:     src_cmfri INTEGER DEFAULT 0,      -- which sources list this site
+20:     src_pib INTEGER DEFAULT 0,
+21:     src_osm INTEGER DEFAULT 0,
+22:     osm_distance_m REAL,              -- distance between CMFRI and OSM points
+23:     fishing_range_km REAL,            -- from CMFRI: usual fishing distance
+24:     fishing_depth_m REAL,             -- from CMFRI: usual fishing depth
+25:     facilities TEXT DEFAULT '{}',     -- JSON: {"ice":true,"fuel":false,"shelter":true,"auction":true}
+26:     confidence_score REAL DEFAULT 0,  -- 0..100
+27:     confidence_label TEXT DEFAULT 'low',   -- low / medium / verified
+28:     last_verified TEXT                -- ISO timestamp of last matching report
+29: );
+30: 
+31: CREATE TABLE IF NOT EXISTS contributions (
+32:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+33:     site_id TEXT NOT NULL REFERENCES sites(id),
+34:     reporter_id TEXT NOT NULL,        -- demo: made-up names only, no personal data
+35:     lat REAL, lon REAL,
+36:     facilities TEXT NOT NULL,         -- JSON, same keys as sites.facilities
+37:     distance_m REAL,                  -- distance from the reporter to the site (if GPS given)
+38:     counted INTEGER DEFAULT 1,        -- 0 = too far from the site: stored but not counted
+39:     photo_path TEXT,
+40:     created_at TEXT NOT NULL
+41: );
+42: 
+43: CREATE TABLE IF NOT EXISTS boats (
+44:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+45:     name TEXT NOT NULL,               -- demo names only
+46:     site_id TEXT NOT NULL REFERENCES sites(id),
+47:     status TEXT DEFAULT 'in_port',    -- in_port / at_sea
+48:     last_departed TEXT,
+49:     last_returned TEXT
+50: );
+51: 
+52: CREATE TABLE IF NOT EXISTS alert_state (
+53:     id INTEGER PRIMARY KEY CHECK (id = 1),   -- one row: the INCOIS high-wave alert for Karnataka
+54:     state TEXT NOT NULL,                     -- active / none  (anything else = unknown)
+55:     set_at TEXT NOT NULL,
+56:     valid_until TEXT NOT NULL,
+57:     note TEXT,
+58:     source TEXT                              -- manual (read from the INCOIS page by a person)
+59: );
+60: 
+61: CREATE TABLE IF NOT EXISTS forecast_cache (
+62:     key TEXT PRIMARY KEY,                    -- offshore point rounded to 0.05 degrees
+63:     fetched_at TEXT NOT NULL,
+64:     payload TEXT NOT NULL
+65: );
+66: 
+67: CREATE TABLE IF NOT EXISTS signals (
+68:     id INTEGER PRIMARY KEY AUTOINCREMENT,
+69:     site_id TEXT NOT NULL REFERENCES sites(id),
+70:     color TEXT NOT NULL,              -- green / amber / red
+71:     reason_en TEXT NOT NULL,
+72:     reason_kn TEXT NOT NULL,
+73:     valid_from TEXT NOT NULL,
+74:     valid_until TEXT NOT NULL,
+75:     inputs TEXT                       -- JSON snapshot of wave height, alert status etc.
+76: );
+77: """
+78: 
+79: def connect():
+80:     DB_PATH.parent.mkdir(exist_ok=True)
+81:     con = sqlite3.connect(DB_PATH)
+82:     con.row_factory = sqlite3.Row
+83:     return con
+84: 
+85: NEW_SITE_COLUMNS = {"cmfri_code": "TEXT", "taluk": "TEXT", "gears": "TEXT",
+86:                     "operation_period": "TEXT", "colocated_with": "TEXT"}
+87: 
+88: NEW_CONTRIB_COLUMNS = {"distance_m": "REAL", "counted": "INTEGER DEFAULT 1"}
+89: 
+90: def _migrate(con, table, wanted):
+91:     have = {r["name"] for r in con.execute(f"PRAGMA table_info({table})")}
+92:     for col, typ in wanted.items():
+93:         if col not in have:
+94:             con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+95: 
+96: def init():
+97:     con = connect()
+98:     con.executescript(SCHEMA)
+99:     _migrate(con, "sites", NEW_SITE_COLUMNS)              # databases made in Step 1 / 2
+100:     _migrate(con, "contributions", NEW_CONTRIB_COLUMNS)
+101:     con.commit()
+102:     return con
+
+
+========== SERVER IMPORTS AND SETUP ==========
+
+1: """Kadal Signal web API.
+2: 
+3: Run from the app directory:
+4:     python server.py
+5: Then open:
+6:     http://127.0.0.1:8000
+7: 
+8: Uses Python's standard library plus the optional google-genai SDK
+9: for the /api/assistant endpoint.
+10: 
+11: Security note:
+12:     POST /api/alert is disabled unless KADAL_ADMIN_TOKEN is configured.
+13:     Set a long, random token in the environment before starting the server.
+14:     GEMINI_API_KEY must be set in the server environment for AI chat.
+15: """
+16: import hmac
+17: import json
+18: import os
+19: import pathlib
+20: import re
+21: import sys
+22: import traceback
+23: from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+24: from urllib.parse import urlparse
+25: 
+26: import db
+27: import contribute
+28: import lights
+29: import assistant
+30: from contribute import ApiError
+31: 
+32: 
+33: STATIC = pathlib.Path(__file__).resolve().parent.parent / "static"
+34: SITE_ID_RE = re.compile(r"/api/sites/([A-Za-z0-9_-]+)")
+35: MAX_BODY_BYTES = 64 * 1024
+36: 
+37: 
+38: def atlas_geojson(con):
+39:     feats = []
+40:     for site in contribute.list_sites(con):
+41:         props = {
+42:             key: site[key]
+43:             for key in (
+44:                 "id",
+45:                 "cmfri_code",
+46:                 "name",
+47:                 "name_kn",
+48:                 "district",
+49:                 "confidence_score",
+50:                 "confidence_label",
+51:                 "facilities",
+52:                 "fishing_range_km",
+53:                 "fishing_depth_m",
+54:                 "last_verified",
+55:             )
+56:         }
+57:         props["sources"] = [
+58:             key.upper()
+59:             for key, enabled in (
+60:                 ("cmfri", site["sources"]["cmfri"]),
+61:                 ("osm", site["sources"]["osm"]),
+62:             )
+63:             if enabled
+64:         ]
+65:         feats.append(
+66:             {
+67:                 "type": "Feature",
+68:                 "geometry": {
+69:                     "type": "Point",
+70:                     "coordinates": [site["lon"], site["lat"]],
+71:                 },
+72:                 "properties": props,
+73:             }
+74:         )
+75: 
+76:     return {
+77:         "type": "FeatureCollection",
+78:         "credits": (
+79:             "Sites: ICAR-CMFRI landing centres map "
+80:             "(licence not stated; credited). "
+81:             "OSM objects: (c) OpenStreetMap contributors, ODbL."
+82:         ),
+83:         "features": feats,
+84:     }
+85: 
+86: 
+87: class Handler(BaseHTTPRequestHandler):
+88:     def log_message(self, fmt, *args):
+89:         sys.stderr.write("  %s\n" % (fmt % args))
+90: 
+91:     def _send(self, code, payload, content_type="application/json; charset=utf-8"):
+92:         body = (
+93:             payload
+94:             if isinstance(payload, bytes)
+95:             else json.dumps(payload, ensure_ascii=False).encode("utf-8")
+96:         )
+97:         self.send_response(code)
+98:         self.send_header("Content-Type", content_type)
+99:         self.send_header("Content-Length", str(len(body)))
+100:         self.send_header("X-Content-Type-Options", "nosniff")
+101:         self.send_header("Cache-Control", "no-store")
+102:         self.send_header("Access-Control-Allow-Origin", "http://127.0.0.1:8000")
+103:         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token")
+104:         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+105:         self.end_headers()
+106:         if body:
+107:             self.wfile.write(body)
+108: 
+109:     def do_OPTIONS(self):
+110:         self._send(204, b"")
+111: 
+112:     def _read_json_body(self):
+113:         raw_length = self.headers.get("Content-Length", "0")
+114:         try:
+115:             length = int(raw_length)
+116:         except (TypeError, ValueError):
+117:             raise ApiError(400, "invalid Content-Length")
+118: 
+119:         if length < 0 or length > MAX_BODY_BYTES:
+120:             raise ApiError(413, "request body too large")
+121: 
+122:         raw = self.rfile.read(length) if length else b"{}"
+123:         try:
+124:             return json.loads(raw.decode("utf-8"))
+125:         except (UnicodeDecodeError, json.JSONDecodeError):
+
+
+========== SERVER API ROUTES ==========
+
+1:     def _route(self, method):
+2:         path = urlparse(self.path).path.rstrip("/") or "/"
+3:         con = db.connect()
+4:         try:
+5:             if method == "GET":
+6:                 if path == "/api/sites":
+7:                     return 200, contribute.list_sites(con)
+8: 
+9:                 match = SITE_ID_RE.fullmatch(path)
+10:                 if match:
+11:                     return 200, contribute.get_site(con, match.group(1))
+12: 
+13:                 if path == "/api/signals":
+14:                     return 200, {
+15:                         "alert": lights.get_alert(con),
+16:                         "credits": lights.CREDITS,
+17:                         "sites": [
+18:                             {
+19:                                 "id": site["id"],
+20:                                 "name": site["name"],
+21:                                 "name_kn": site["name_kn"],
+22:                                 "signal": site["signal"],
+23:                             }
+24:                             for site in contribute.list_sites(con)
+25:                         ],
+26:                     }
+27: 
+28:                 if path == "/api/alert":
+29:                     return 200, lights.get_alert(con)
+30: 
+31:                 if path == "/api/queue":
+32:                     return 200, contribute.queue(con)
+33: 
+34:                 if path == "/api/atlas.geojson":
+35:                     return 200, atlas_geojson(con)
+36: 
+37:                 if path in ("/", "/index.html"):
+38:                     index_file = STATIC / "index.html"
+39:                     if not index_file.is_file():
+40:                         raise ApiError(404, "dashboard file not found")
+41:                     return 200, index_file.read_bytes()
+42: 
+43:                 raise ApiError(404, "not found")
+44: 
+45:             if method == "POST":
+46:                 if path == "/api/assistant":
+47:                     body = self._read_json_body()
+48:                     result = assistant.answer(
+49:                         con,
+50:                         body,
+51:                         client_ip=self.client_address[0],
+52:                     )
+53:                     return 200, result
+54: 
+55:                 if path == "/api/alert":
+56:                     self._require_admin_token()
+57:                     body = self._read_json_body()
+58:                     try:
+59:                         result = lights.set_alert(
+60:                             con,
+61:                             body.get("state"),
+62:                             body.get("hours", 12),
+63:                             body.get("note"),
+64:                         )
+65:                     except (ValueError, TypeError) as exc:
+66:                         raise ApiError(400, str(exc))
+67:                     return 200, result
+68: 
+69:                 match = re.fullmatch(
+70:                     r"/api/sites/([A-Za-z0-9_-]+)/contributions", path
+71:                 )
+72:                 if match:
+73:                     body = self._read_json_body()
+74:                     return 201, contribute.add_contribution(
+75:                         con,
+76:                         match.group(1),
+77:                         body.get("reporter_id"),
+78:                         body.get("facilities"),
+79:                         body.get("lat"),
+80:                         body.get("lon"),
+81:                         body.get("photo"),
+82:                     )
+83: 
+84:                 raise ApiError(404, "not found")
+85: 
+86:             raise ApiError(405, "method not allowed")
+87:         finally:
+88:             con.close()
+89: 
+
+
+========== WEBSITE DASHBOARD HTML AND JAVASCRIPT ==========
+
+1:       }
+2: 
+3:       .panelhead {
+4:         padding: 14px
+5:       }
+6: 
+7:       .sitecontent {
+8:         padding: 14px
+9:       }
+10: 
+11:       .grid2 {
+12:         gap: 7px
+13:       }
+14: 
+15:       .mini {
+16:         padding: 9px
+17:       }
+18:     }
+19:   </style>
+20: </head>
+21: 
+22: <body>
+23:   <header class="top">
+24:     <div class="brand">
+25:       <div class="logo">🌊</div>
+26:       <div>
+27:         <h1>KADAL SIGNAL</h1>
+28:         <p>COASTAL INTELLIGENCE · KARNATAKA</p>
+29:       </div>
+30:     </div>
+31:     <div class="topright">
+32:       <span class="pill">● &nbsp;KARNATAKA PILOT · 93 Sites</span>
+33:       <button class="pill" id="langBtn" type="button">ಕನ್ನಡ</button>
+34:     </div>
+35:   </header>
+36:   <main class="wrap">
+37:     <section class="intro">
+38:       <div>
+39:         <div class="eyebrow">COASTAL MONITORING PLATFORM</div>
+40:         <h2 id="pageTitle">Coastal situation map</h2>
+41:         <p id="pageSub">Explore landing centres, local reports and the latest available sea-state signal.</p>
+42:       </div>
+43:       <div class="stats">
+44:         <div class="stat"><b id="totalCount">—</b><span>Landing centres</span></div>
+45:         <div class="stat"><b id="verifiedCount">—</b><span>Verified sites</span></div>
+46:         <div class="stat"><b id="redCount">—</b><span>Red signals</span></div>
+47:         <div class="stat"><b id="updatedAt">—</b><span>Signal update</span></div>
+48:       </div>
+49:     </section>
+50:     <div class="toolbar">
+51:       <input class="field search" id="search" placeholder="⌕  Search site, CMFRI code, district or taluk…">
+52:       <select class="field" id="district">
+53:         <option value="">All districts</option>
+54:       </select>
+55:       <select class="field" id="signalFilter">
+56:         <option value="">All signal colours</option>
+57:         <option value="green">Green</option>
+58:         <option value="amber">Amber</option>
+59:         <option value="red">Red</option>
+60:         <option value="grey">Grey / unavailable</option>
+61:       </select>
+62:       <button class="btn" id="reset">Reset filters</button>
+63:     </div>
+64:     <div class="layout">
+65:       <section class="mapbox">
+66:         <div class="maphead">
+67:           <div><strong id="mapTitle">Karnataka coast</strong><br><small id="mapSub">Select a marker to view
+68:               landing-centre details</small></div>
+69:           <div class="legend">
+70:             <span><i class="dot" style="background:var(--green)"></i>Green</span>
+71:             <span><i class="dot" style="background:var(--amber)"></i>Amber</span>
+72:             <span><i class="dot" style="background:var(--red)"></i>Red</span>
+73:             <span><i class="dot" style="background:var(--grey)"></i>Unavailable</span>
+74:           </div>
+75:         </div>
+76:         <div id="map">
+77:           <div class="loading">Loading coastal map…</div>
+78:         </div>
+79:       </section>
+80:       <aside class="panel">
+81:         <div class="panelhead">
+82:           <h3 id="detailTitle">Landing-centre details</h3>
+83:           <p id="detailSub">Choose a map marker or a site from the list.</p>
+84:         </div>
+85:         <div class="sitecontent" id="siteDetail">
+86:           <div class="empty">🌊<br><br>Select a landing centre on the map to see its details.</div>
+87:         </div>
+88:         <div class="list">
+89:           <div class="listhead"><b id="listTitle">LANDING CENTRES</b><span class="tiny" id="resultCount">Loading…</span>
+90:           </div>
+91:           <div id="siteList"></div>
+92:         </div>
+93:       </aside>
+94:     </div>
+95:     <div class="disclaimer"><span><b>Important:</b> Kadal Signal is a prototype decision-support display, not an
+96:         official fishing, weather or navigation advisory. Signal colours use experimental thresholds and available
+97:         forecast data. Always follow official IMD/INCOIS and fisheries-department advisories. Cached forecasts may be
+98:         older than live data.</span></div>
+99:     <div class="foot">Landing-centre source: ICAR-CMFRI. Map tiles and geographic data: © OpenStreetMap contributors.
+100:       Kannada labels are currently partial and require review by a fluent Kannada speaker.</div>
+101:   </main>
+102:   <div class="modalback" id="reportModal">
+103:     <div class="modal">
+104:       <h3 id="reportTitle">Community site report</h3>
+105:       <p id="reportIntro">Use a made-up reporter ID (not your name or phone number). A second matching report is needed
+106:         for verification.</p>
+107:       <form id="reportForm">
+108:         <label for="reporter">Reporter ID</label>
+109:         <input class="field" id="reporter" required pattern="[A-Za-z0-9_-]{1,40}" placeholder="Example: fisher-demo-02">
+110:         <label>Are these facilities available at this site?</label>
+111:         <div class="checkgrid">
+112:           <label class="check"><input type="checkbox" id="ice"> Ice</label>
+113:           <label class="check"><input type="checkbox" id="fuel"> Fuel</label>
+114:           <label class="check"><input type="checkbox" id="shelter"> Shelter</label>
+115:           <label class="check"><input type="checkbox" id="auction"> Auction</label>
+116:         </div>
+117:         <div class="notice" id="reportNotice">This report will be stored for community verification. Do not enter
+118:           personal information.</div>
+119:         <div class="modalactions"><button type="button" class="btn secondary" id="cancelReport">Cancel</button><button
+120:             type="submit" class="btn">Submit report</button></div>
+121:         <div class="notice" id="reportResult" aria-live="polite"></div>
+122:       </form>
+123:     </div>
+124:   </div>
+125:   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+126:     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+127:   <script>
+128:     const $ = id => document.getElementById(id); let sites = [], markers = new Map(), selected = null, lang = 'en', map = null, layer = null;
+129:     const words = {en: {title: 'Coastal situation map', sub: 'Explore landing centres, local reports and the latest available sea-state signal.', search: 'Search site, CMFRI code, district or taluk…', details: 'Landing-centre details', choose: 'Choose a map marker or a site from the list.', list: 'LANDING CENTRES', none: 'No sites match these filters.', report: 'Community site report', submit: 'Submit report', verified: 'Verified', pending: 'Pending', conflict: 'Conflict', noneStatus: 'No reports', signal: {green: 'Green', amber: 'Amber', red: 'Red', grey: 'Unavailable'}, reason: 'Signal reason', facilities: 'Reported facilities', verification: 'Community verification', weather: 'Forecast details', wave: 'Maximum forecast wave', alert: 'INCOIS alert state', source: 'Forecast source', forecastAge: 'Forecast age', generated: 'Signal generated', expires: 'Signal valid until', alertNote: 'Alert note', confidence: 'Atlas confidence', reports: 'Community reports', code: 'CMFRI code', district: 'District', taluk: 'Taluk', coords: 'Coordinates', fishing: 'Fishing range / depth', period: 'Operation period', last: 'Last verified', noSignal: 'No current signal is available for this site.', privacy: 'Report using a made-up ID only. Do not enter your name or phone number.'}, kn: {title: 'ಕರಾವಳಿ ಸ್ಥಿತಿ ನಕ್ಷೆ', sub: 'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರಗಳು, ಸ್ಥಳೀಯ ವರದಿಗಳು ಮತ್ತು ಲಭ್ಯವಿರುವ ಸಮುದ್ರ ಸ್ಥಿತಿಯ ಸಂಕೇತವನ್ನು ನೋಡಿ.', search: 'ಕೇಂದ್ರ, CMFRI ಕೋಡ್, ಜಿಲ್ಲೆ ಅಥವಾ ತಾಲ್ಲೂಕು ಹುಡುಕಿ…', details: 'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರದ ವಿವರಗಳು', choose: 'ವಿವರಗಳನ್ನು ನೋಡಲು ನಕ್ಷೆಯ ಗುರುತು ಅಥವಾ ಪಟ್ಟಿಯಲ್ಲಿರುವ ಕೇಂದ್ರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.', list: 'ಮೀನು ಇಳಿಸುವ ಕೇಂದ್ರಗಳು', none: 'ಈ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಹೊಂದುವ ಕೇಂದ್ರಗಳಿಲ್ಲ.', report: 'ಸಮುದಾಯದ ಸ್ಥಳ ವರದಿ', submit: 'ವರದಿ ಸಲ್ಲಿಸಿ', verified: 'ಪರಿಶೀಲಿಸಲಾಗಿದೆ', pending: 'ಬಾಕಿಯಿದೆ', conflict: 'ವಿರೋಧಾಭಾಸ', noneStatus: 'ವರದಿಗಳಿಲ್ಲ', signal: {green: 'ಹಸಿರು', amber: 'ಹಳದಿ', red: 'ಕೆಂಪು', grey: 'ಲಭ್ಯವಿಲ್ಲ'}, reason: 'ಸಂಕೇತದ ಕಾರಣ', facilities: 'ವರದಿಯಾದ ಸೌಲಭ್ಯಗಳು', verification: 'ಸಮುದಾಯ ಪರಿಶೀಲನೆ', weather: 'ಮುನ್ಸೂಚನೆ ವಿವರಗಳು', wave: 'ಗರಿಷ್ಠ ಅಲೆ ಎತ್ತರ', alert: 'INCOIS ಎಚ್ಚರಿಕೆ ಸ್ಥಿತಿ', source: 'ಮುನ್ಸೂಚನೆ ಮೂಲ', forecastAge: 'ಮುನ್ಸೂಚನೆಯ ವಯಸ್ಸು', generated: 'ಸಂಕೇತ ರಚಿಸಿದ ಸಮಯ', expires: 'ಸಂಕೇತದ ಅವಧಿ ಮುಗಿಯುವ ಸಮಯ', alertNote: 'ಎಚ್ಚರಿಕೆ ಟಿಪ್ಪಣಿ', confidence: 'ಅಟ್ಲಸ್ ವಿಶ್ವಾಸಾರ್ಹತೆ', reports: 'ಸಮುದಾಯ ವರದಿಗಳು', code: 'CMFRI ಕೋಡ್', district: 'ಜಿಲ್ಲೆ', taluk: 'ತಾಲ್ಲೂಕು', coords: 'ನಿರ್ದೇಶಾಂಕಗಳು', fishing: 'ಮೀನುಗಾರಿಕೆ ವ್ಯಾಪ್ತಿ / ಆಳ', period: 'ಕಾರ್ಯಾಚರಣೆಯ ಅವಧಿ', last: 'ಕೊನೆಯ ಪರಿಶೀಲನೆ', noSignal: 'ಈ ಕೇಂದ್ರಕ್ಕೆ ಪ್ರಸ್ತುತ ಸಂಕೇತ ಲಭ್ಯವಿಲ್ಲ.', privacy: 'ಕಲ್ಪಿತ ID ಬಳಸಿ ಮಾತ್ರ ವರದಿ ಮಾಡಿ. ನಿಮ್ಮ ಹೆಸರು ಅಥವಾ ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಬೇಡಿ.'}};
+130:     function t(k) {return words[lang][k] || words.en[k] || k}
+131:     function sig(s) {return s?.color || 'grey'}
+132:     function timeLabel(v) {return v ? new Date(v).toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) : '—'}
+133:     function ageLabel(v) {if (v == null) return '—'; const n = Number(v); if (!Number.isFinite(n)) return '—'; if (n < 1) return `${Math.round(n * 60)} min`; return `${n.toFixed(1)} h`}
+134:     function forecastLabel(v) {return ({live: 'Live', cache: 'Cached · fresh', 'stale-cache': 'Stale cache', none: 'Unavailable', simulated: 'Simulated'})[v] || v || '—'}
+135:     function alertLabel(v) {return ({active: 'Active', none: 'None recorded', unknown: 'Unknown'})[v] || v || 'Unknown'} function esc(v) {return String(v ?? '—').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]))} function label(v) {return v === 'verified' ? t('verified') : v === 'pending' ? t('pending') : v === 'conflict' ? t('conflict') : t('noneStatus')}
+136:     function icon(color) {const c = {green: '#15966b', amber: '#e8a22a', red: '#d94b45', grey: '#84918f'}[color] || '#84918f'; return L.divIcon({className: '', html: `<div class="marker-pin" style="background:${c}"></div>`, iconSize: [17, 17], iconAnchor: [8, 8]})}
+137:     function initMap() {if (!window.L) {$('map').innerHTML = '<div class="empty">Map library could not load. Check your internet connection, then refresh this page. The site list and details can still load.</div>'; return } map = L.map('map').setView([14.15, 74.9], 7); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '© OpenStreetMap contributors'}).addTo(map); layer = L.featureGroup().addTo(map)}
+138:     function filtered() {const q = $('search').value.trim().toLowerCase(), d = $('district').value, s = $('signalFilter').value; return sites.filter(x => (!q || [x.name, x.name_kn, x.cmfri_code, x.district, x.taluk, x.id].some(v => String(v || '').toLowerCase().includes(q))) && (!d || x.district === d) && (!s || sig(x.signal) === s))}
+139:     function render() {const arr = filtered(); $('resultCount').textContent = `${arr.length} / ${sites.length}`; $('siteList').innerHTML = arr.map(x => `<button class="site-row" data-id="${esc(x.id)}"><span><strong>${esc(x.name)}</strong><small>${esc(x.cmfri_code || x.id)} · ${esc(x.district || '')}</small></span><span class="right"><i class="dot" style="background:${({green: 'var(--green)', amber: 'var(--amber)', red: 'var(--red)', grey: 'var(--grey)'})[sig(x.signal)]}"></i><span class="tiny">${t('signal')[sig(x.signal)]}</span></span></button>`).join('') || `<div class="empty">${t('none')}</div>`; document.querySelectorAll('.site-row').forEach(b => b.addEventListener('click', () => selectSite(b.dataset.id, true))); if (layer) {layer.clearLayers(); markers.clear(); arr.forEach(x => {if (!Number.isFinite(+x.lat) || !Number.isFinite(+x.lon)) return; const m = L.marker([+x.lat, +x.lon], {icon: icon(sig(x.signal))}).bindTooltip(`${esc(x.name)} · ${esc(x.cmfri_code || x.id)}`); m.on('click', () => selectSite(x.id, false)); m.addTo(layer); markers.set(x.id, m)}); if (arr.length && map && !selected) map.fitBounds(layer.getBounds().pad(.12));} if (selected && !arr.some(x => x.id === selected)) selected = null; if (!selected && arr.length) showPlaceholder();}
+140:     function showPlaceholder() {$('siteDetail').innerHTML = `<div class="empty">🌊<br><br>${t('choose')}</div>`}
+141:     function selectSite(id, zoom) {
+142:       const x = sites.find(z => z.id === id); if (!x) return; selected = id; const s = x.signal || {}, c = sig(s), r = x.reports || {}, fac = x.facilities || {}; const reason = lang === 'kn' ? (s.reason_kn || s.reason_en) : s.reason_en; const status = label(x.confidence_label); const facNames = ['ice', 'fuel', 'shelter', 'auction']; const tags = fac ? facNames.filter(k => fac[k] === true).map(k => ({ice: 'Ice', fuel: 'Fuel', shelter: 'Shelter', auction: 'Auction'}[k])) : []; $('siteDetail').innerHTML = `<div class="site-title"><div><h2>${esc(x.name)} ${x.name_kn ? `<span class="kn">${esc(x.name_kn)}</span>` : ''}</h2><div class="subline">${esc(x.district)} · ${esc(x.taluk)} · ${esc(x.cmfri_code || x.id)}</div></div><span class="signal ${c}"><i class="dot" style="background:currentColor"></i>${t('signal')[c]}</span></div><div class="reason"><strong>${t('reason')}</strong>${reason ? esc(reason) : t('noSignal')}${s.disclaimer_en ? `<span class="kn">${esc(lang === 'kn' ? (s.disclaimer_kn || s.disclaimer_en) : s.disclaimer_en)}</span>` : ''}</div><div class="grid2"><div class="mini"><span>${t('confidence')}</span><b>${esc(x.confidence_score)} / 100 · ${esc(x.confidence_label)}</b></div><div class="mini"><span>${t('verification')}</span><b>${esc(status)}</b></div><div class="mini"><span>${t('reports')}</span><b>${esc(r.counted || 0)} counted / ${esc(r.total || 0)} total</b></div><div class="mini"><span>${t('wave')}</span><b>${s.max_wave_m != null ? esc(s.max_wave_m) + ' m' : '—'}</b></div></div><div class="section"><h4>${t('weather')}</h4><div class="grid2">
+143: <div class="mini"><span>${t('alert')}</span><b>${esc(alertLabel(s.alert_state))}</b></div>
+144: <div class="mini"><span>${t('source')}</span><b>${esc(forecastLabel(s.forecast_source))}${s.simulated ? ' · SIMULATED' : ''}</b></div>
+145: <div class="mini"><span>${t('forecastAge')}</span><b>${esc(ageLabel(s.forecast_age_h))}</b></div>
+146: <div class="mini"><span>${t('generated')}</span><b>${esc(timeLabel(s.valid_from))}</b></div>
+147: <div class="mini"><span>${t('expires')}</span><b>${esc(timeLabel(s.valid_until))}</b></div>
+148: <div class="mini"><span>${t('alertNote')}</span><b>${esc(s.alert_note || (s.alert_state === 'unknown' ? 'No current alert entry' : '—'))}</b></div>
+149: </div></div><div class="section"><h4>${t('facilities')}</h4><div class="tags">${tags.length ? tags.map(v => `<span class="tag">✓ ${v}</span>`).join('') : '<span class="tiny">No verified facility information yet</span>'}</div></div><div class="section"><h4>Site information</h4><div class="grid2"><div class="mini"><span>${t('code')}</span><b>${esc(x.cmfri_code || x.id)}</b></div><div class="mini"><span>${t('coords')}</span><b>${(+x.lat).toFixed(4)}, ${(+x.lon).toFixed(4)}</b></div><div class="mini"><span>${t('fishing')}</span><b>${esc(x.fishing_range_km ?? '—')} km / ${esc(x.fishing_depth_m ?? '—')} m</b></div><div class="mini"><span>${t('last')}</span><b>${x.last_verified ? esc(new Date(x.last_verified).toLocaleDateString()) : '—'}</b></div></div></div><button class="btn reportbtn" id="openReport">＋ ${t('report')}</button>`; $('detailTitle').textContent = t('details'); $('detailSub').textContent = `${x.name} · ${x.cmfri_code || x.id}`; $('openReport').addEventListener('click', () => openReport(x)); if (zoom && map && markers.has(id)) {map.setView(markers.get(id).getLatLng(), 11); markers.get(id).openTooltip()} document.querySelectorAll('.site-row').forEach(b => b.style.background = b.dataset.id === id ? '#eef7f3' : '#fff')
+150:     }
+151:     function openReport(x) {$('reportModal').classList.add('show'); $('reportTitle').textContent = `${t('report')} · ${x.name}`; $('reportIntro').textContent = t('privacy'); $('reportResult').textContent = ''; $('reportForm').dataset.siteId = x.id}
+152:     $('reportForm').addEventListener('submit', async e => {e.preventDefault(); const id = e.currentTarget.dataset.siteId; const payload = {reporter_id: $('reporter').value.trim(), facilities: {ice: $('ice').checked, fuel: $('fuel').checked, shelter: $('shelter').checked, auction: $('auction').checked}}; $('reportResult').textContent = 'Submitting…'; try {const res = await fetch(`/api/sites/${encodeURIComponent(id)}/contributions`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}); const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Could not submit report'); $('reportResult').textContent = data.message; $('reportResult').style.color = '#08754f'; await loadData(); selectSite(id, false); setTimeout(() => $('reportModal').classList.remove('show'), 2200)} catch (err) {$('reportResult').textContent = err.message; $('reportResult').style.color = '#b52f2a'} });
+153:     async function loadData() {try {const r = await fetch('/api/sites', {cache: 'no-store'}); if (!r.ok) throw new Error('API returned ' + r.status); sites = await r.json(); $('totalCount').textContent = sites.length; $('verifiedCount').textContent = sites.filter(x => x.confidence_label === 'verified').length; $('redCount').textContent = sites.filter(x => sig(x.signal) === 'red').length; const dates = sites.map(x => x.signal?.valid_from).filter(Boolean).sort(); $('updatedAt').textContent = dates.length ? new Date(dates[dates.length - 1]).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '—'; const districts = [...new Set(sites.map(x => x.district).filter(Boolean))].sort(); $('district').innerHTML = '<option value="">All districts</option>' + districts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join(''); render(); if (selected) selectSite(selected, false)} catch (e) {$('siteDetail').innerHTML = `<div class="empty">Could not load sites: ${esc(e.message)}<br>Make sure <b>python server.py</b> is running.</div>`; $('resultCount').textContent = 'API unavailable'} }
+154:     function setLang() {const w = words[lang]; $('pageTitle').textContent = w.title; $('pageSub').textContent = w.sub; $('search').placeholder = w.search; $('detailTitle').textContent = w.details; $('detailSub').textContent = w.choose; $('listTitle').textContent = w.list; $('mapTitle').textContent = lang === 'kn' ? 'ಕರ್ನಾಟಕ ಕರಾವಳಿ' : 'Karnataka coast'; $('mapSub').textContent = lang === 'kn' ? 'ವಿವರಗಳಿಗಾಗಿ ನಕ್ಷೆಯ ಗುರುತನ್ನು ಆಯ್ಕೆಮಾಡಿ' : 'Select a marker to view landing-centre details'; $('langBtn').textContent = lang === 'en' ? 'ಕನ್ನಡ' : 'English'; render(); if (selected) selectSite(selected, false); else showPlaceholder()}
+155:     $('search').addEventListener('input', render); $('district').addEventListener('change', render); $('signalFilter').addEventListener('change', render); $('reset').addEventListener('click', () => {$('search').value = ''; $('district').value = ''; $('signalFilter').value = ''; selected = null; render(); showPlaceholder()}); $('langBtn').addEventListener('click', () => {lang = lang === 'en' ? 'kn' : 'en'; setLang()}); $('cancelReport').addEventListener('click', () => $('reportModal').classList.remove('show')); $('reportModal').addEventListener('click', e => {if (e.target === $('reportModal')) $('reportModal').classList.remove('show')});
+156:     initMap(); loadData(); setInterval(loadData, 180000);
+157: 
+158:   </script>
+159: 
+160: <style>
+161: #ks-ai-button {
+162:   position:fixed; right:22px; bottom:22px; z-index:9999;
+163:   border:0; border-radius:28px; padding:14px 20px;
+164:   background:#087f8c; color:white; font-weight:700;
+165:   cursor:pointer; box-shadow:0 4px 16px #0004;
+166: }
+167: #ks-ai-panel {
+168:   display:none; position:fixed; right:18px; bottom:82px;
+169:   z-index:9999; width:min(360px,calc(100vw - 36px));
+170:   height:460px; max-height:70vh; background:white;
+171:   color:#172b32; border:1px solid #cbd5d8; border-radius:16px;
+172:   box-shadow:0 8px 30px #0003; overflow:hidden;
+173:   font-family:Arial,sans-serif;
+174: }
+175: #ks-ai-head {
+176:   background:#087f8c; color:white; padding:14px;
+177:   font-weight:bold; display:flex; justify-content:space-between;
+178: }
+179: #ks-ai-messages {
+180:   height:325px; overflow-y:auto; padding:12px;
+181:   background:#f5f8f8;
+182: }
+183: .ks-ai-msg {
+184:   padding:10px 12px; margin:8px 0; border-radius:12px;
+185:   white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px;
+186: }
+187: .ks-ai-user { background:#d8eeee; margin-left:35px; }
+188: .ks-ai-bot { background:white; margin-right:25px; border:1px solid #ddd; }
+189: #ks-ai-form { display:flex; gap:6px; padding:10px; }
+190: #ks-ai-input {
+191:   flex:1; min-width:0; padding:11px; border:1px solid #bbb;
+192:   border-radius:9px;
+193: }
+194: #ks-ai-send {
+195:   border:0; border-radius:9px; padding:0 14px;
+196:   background:#087f8c; color:white; cursor:pointer;
+197: }
+198: #ks-ai-note { font-size:10px; color:#667; padding:0 12px 8px; }
+199: </style>
+200: 
+201: <button id="ks-ai-button" type="button">Ask Kadal AI</button>
+202: 
+203: <section id="ks-ai-panel" aria-label="Kadal Signal AI Assistant">
+204:   <div id="ks-ai-head">
+205:     <span>Kadal Signal Assistant</span>
+206:     <button id="ks-ai-close" type="button"
+207:       style="background:none;border:0;color:white;font-size:20px;cursor:pointer">×</button>
+208:   </div>
+209:   <div id="ks-ai-messages" aria-live="polite">
+210:     <div class="ks-ai-msg ks-ai-bot">
+211:       Namaskara! I can help explain Kadal Signal and its information.
+212:       Ask me in English or Kannada.
+213:     </div>
+214:   </div>
+215:   <div id="ks-ai-note">
+216:     Decision-support information only. Not an official advisory or sailing clearance.
+217:   </div>
+218:   <form id="ks-ai-form">
+219:     <input id="ks-ai-input" placeholder="Ask your question..."
+220:       autocomplete="off" maxlength="1200" required>
+221:     <button id="ks-ai-send" type="submit">Send</button>
+222:   </form>
+223: </section>
+224: 
+225: <script>
+226: (() => {
+
+
+========== WEBSITE STYLE BOUNDARIES ==========
+
+12: <style>
+918: </style>
+1059: <style>
+1098: </style>

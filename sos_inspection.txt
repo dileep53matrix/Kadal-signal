@@ -1,0 +1,66 @@
+===== BACKUP STATUS =====
+index.html FOUND
+server.py FOUND
+db.py FOUND
+kadal.db FOUND
+
+===== WEBSITE STRUCTURE =====
+922: <header class="top">
+935: <main class="wrap">
+936: <section class="intro">
+964: <section class="mapbox">
+1024: <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+1026: <script>
+1102: <section id="ks-ai-panel" aria-label="Kadal Signal AI Assistant">
+1124: <script>
+
+===== WEBSITE FEATURES / API REFERENCES =====
+1029: function t(k) {return words[lang][k] || words.en[k] || k}
+1030: function sig(s) {return s?.color || 'grey'}
+1031: function timeLabel(v) {return v ? new Date(v).toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) : '—'}
+1032: function ageLabel(v) {if (v == null) return '—'; const n = Number(v); if (!Number.isFinite(n)) return '—'; if (n < 1) return `${Math.round(n * 60)} min`; return `${n.toFixed(1)} h`
+1033: function forecastLabel(v) {return ({live: 'Live', cache: 'Cached · fresh', 'stale-cache': 'Stale cache', none: 'Unavailable', simulated: 'Simulated'})[v] || v || '—'}
+1034: function alertLabel(v) {return ({active: 'Active', none: 'None recorded', unknown: 'Unknown'})[v] || v || 'Unknown'} function esc(v) {return String(v ?? '—').replace(/[&<>"']/g, c 
+1035: function icon(color) {const c = {green: '#15966b', amber: '#e8a22a', red: '#d94b45', grey: '#84918f'}[color] || '#84918f'; return L.divIcon({className: '', html: `<div class="marke
+1036: function initMap() {if (!window.L) {$('map').innerHTML = '<div class="empty">Map library could not load. Check your internet connection, then refresh this page. The site list and d
+1037: function filtered() {const q = $('search').value.trim().toLowerCase(), d = $('district').value, s = $('signalFilter').value; return sites.filter(x => (!q || [x.name, x.name_kn, x.c
+1038: function render() {const arr = filtered(); $('resultCount').textContent = `${arr.length} / ${sites.length}`; $('siteList').innerHTML = arr.map(x => `<button class="site-row" data-i
+1039: function showPlaceholder() {$('siteDetail').innerHTML = `<div class="empty">🌊<br><br>${t('choose')}</div>`}
+1040: function selectSite(id, zoom) {
+1048: </div></div><div class="section"><h4>${t('facilities')}</h4><div class="tags">${tags.length ? tags.map(v => `<span class="tag">✓ ${v}</span>`).join('') : '<span class="tiny">No ver
+1050: function openReport(x) {$('reportModal').classList.add('show'); $('reportTitle').textContent = `${t('report')} · ${x.name}`; $('reportIntro').textContent = t('privacy'); $('reportR
+1051: $('reportForm').addEventListener('submit', async e => {e.preventDefault(); const id = e.currentTarget.dataset.siteId; const payload = {reporter_id: $('reporter').value.trim(), faci
+1052: async function loadData() {try {const r = await fetch('/api/sites', {cache: 'no-store'}); if (!r.ok) throw new Error('API returned ' + r.status); sites = await r.json(); $('totalCo
+1053: function setLang() {const w = words[lang]; $('pageTitle').textContent = w.title; $('pageSub').textContent = w.sub; $('search').placeholder = w.search; $('detailTitle').textContent 
+1054: $('search').addEventListener('input', render); $('district').addEventListener('change', render); $('signalFilter').addEventListener('change', render); $('reset').addEventListener('
+1134: button.addEventListener('click', () => {
+1139: close.addEventListener('click', () => {
+1143: function addMessage(text, type) {
+1152: form.addEventListener('submit', async (event) => {
+1165: const response = await fetch('/api/assistant', {
+
+===== BACKEND ROUTES =====
+109: def do_OPTIONS(self):
+137: def _route(self, method):
+142: if path == "/api/sites":
+145: match = SITE_ID_RE.fullmatch(path)
+149: if path == "/api/signals":
+164: if path == "/api/alert":
+167: if path == "/api/queue":
+170: if path == "/api/atlas.geojson":
+173: if path in ("/", "/index.html"):
+182: if path == "/api/assistant":
+191: if path == "/api/alert":
+205: match = re.fullmatch(
+241: def do_GET(self):
+244: def do_POST(self):
+
+===== DATABASE TABLES =====
+sites
+contributions
+boats
+alert_state
+forecast_cache
+signals
+
+===== INSPECTION COMPLETE =====
